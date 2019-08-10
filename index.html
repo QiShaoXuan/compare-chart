@@ -38,7 +38,7 @@
         top: 0;
         font-size: 16px;
         height: 16px;
-        line-height: 16px;
+        line-height: 24px;
     }
 
     .chart {
@@ -74,14 +74,21 @@
         </div>
     </div>
     <div class="chart-warpper">
-        <div class="time">render time : <span
-                id="echart-time"></span> ms
+        <div class="time">
+            <p>render time : <span
+                    id="echart-time"></span> ms</p>
+            <p>average : <span id="echart-average"> ms</span>
+            </p>
         </div>
         <div class="chart echart" id="echart"></div>
     </div>
     <div class="chart-warpper">
-        <div class="time">render time : <span
-                id="highchart-time"></span> ms
+        <div class="time"><p>render time : <span
+                id="highchart-time"></span> ms</p>
+            <p>
+            <p>average : <span
+                    id="highchart-average"></span> ms</p>
+            </p>
         </div>
         <div class="chart high-chart" id="high-chart"></div>
     </div>
@@ -116,7 +123,56 @@
   const btn = document.querySelector('#render-btn')
 
   const echartTime = document.querySelector('#echart-time')
+  const echartAverage = document.querySelector('#echart-average')
   const highchartTime = document.querySelector('#highchart-time')
+  const highchartAverage = document.querySelector('#highchart-average')
+  const highChart = Highcharts.chart('high-chart', {
+    plotOptions: {
+      series: {
+        animation: false
+      }
+    },
+    chart: {
+      type: 'line',
+      animation: false,
+    },
+    xAxis: {
+      categories: []
+    },
+    series: [{
+      name: 'mock-data',
+      data: []
+    }]
+  });
+  const echart = echarts.init(document.getElementById('echart'));
+
+
+  let echartTimeArr = []
+  let highchartTimeArr = []
+  echart.setOption({
+    tooltip: {
+      trigger: 'axis'
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: []
+    },
+    yAxis: {
+      type: 'value'
+    },
+    series: [
+      {
+        name: 'mock data',
+        type: 'line',
+        smooth: true,
+        symbol: 'none',
+        sampling: 'average',
+        data: []
+      }
+    ]
+  })
+
   btn.addEventListener('click', () => {
     const number = input.value
     setChart(number)
@@ -124,30 +180,28 @@
 
   setChart(10000)
 
+  function setAverage() {
+    echartAverage.innerText = Math.floor(echartTimeArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0) / echartTimeArr.length)
+    highchartAverage.innerText = Math.floor(highchartTimeArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0) / highchartTimeArr.length)
+  }
+
   function setChart(num) {
     let xData = getXData(num)
     let yData = getYData(num)
 
     Promise.all([setEchart(xData, yData), setHighChart(xData, yData)]).then(() => {
-      console.log('end')
+      setAverage()
     })
   }
 
   function setEchart(xData, yData) {
     const startTime = new Date().getTime()
     return new Promise(resolve => {
-      const echart = echarts.init(document.getElementById('echart'));
       const echartOption = {
-        tooltip: {
-          trigger: 'axis'
-        },
         xAxis: {
           type: 'category',
           boundaryGap: false,
           data: xData
-        },
-        yAxis: {
-          type: 'value'
         },
         series: [
           {
@@ -161,8 +215,10 @@
         ]
       };
       echart.setOption(echartOption);
-      echartTime.innerText = new Date().getTime() - startTime
 
+      const time = new Date().getTime() - startTime
+      echartTime.innerText = time
+      echartTimeArr.push(time)
       resolve()
     })
   }
@@ -171,16 +227,7 @@
     const startTime = new Date().getTime()
 
     return new Promise((resolve) => {
-        Highcharts.chart('high-chart', {
-          plotOptions: {
-            series: {
-              animation: false
-            }
-          },
-          chart: {
-            type: 'line',
-            animation: false,
-          },
+        highChart.update({
           xAxis: {
             categories: xData
           },
@@ -189,7 +236,10 @@
             data: yData
           }]
         });
-        highchartTime.innerText = new Date().getTime() - startTime
+        const time = new Date().getTime() - startTime
+        highchartTime.innerText = time
+        highchartTimeArr.push(time)
+
         resolve()
 
       }
