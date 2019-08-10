@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>compare chart</title>
+</head>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+    }
+
+    html, body {
+        height: 100%;
+    }
+
+    body {
+        background: #eee;
+    }
+
+    .container {
+        position: relative;
+        height: 100%;
+        padding-top: 40px;
+        box-sizing: border-box;
+    }
+
+    .chart-warpper {
+        height: 50%;
+        position: relative;
+    }
+
+    .time {
+        position: absolute;
+        left: 20px;
+        top: 0;
+        font-size: 16px;
+        height: 16px;
+        line-height: 16px;
+    }
+
+    .chart {
+        height: 100%;
+        width: 80%;
+        margin: 0 auto;
+    }
+
+    .input-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 40px;
+    }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/4.2.1/echarts.common.js"></script>
+<script src="http://cdn.highcharts.com.cn/highcharts/highcharts.js"></script>
+<script src="http://cdn.highcharts.com.cn/highcharts/highcharts-more.js"></script>
+
+<body>
+
+<div class="container">
+    <div class="input-container">
+        <div>
+            <span>Set data number</span>
+            <input type="number" id="input" value="10000"
+                    min="100">
+            <button id="render-btn">render</button>
+        </div>
+    </div>
+    <div class="chart-warpper">
+        <div class="time">render time : <span
+                id="echart-time"></span> ms
+        </div>
+        <div class="chart echart" id="echart"></div>
+    </div>
+    <div class="chart-warpper">
+        <div class="time">render time : <span
+                id="highchart-time"></span> ms
+        </div>
+        <div class="chart high-chart" id="high-chart"></div>
+    </div>
+
+</div>
+</body>
+<script>
+  function getXData(n) {
+    var base = +new Date(1968, 9, 3);
+    var oneDay = 24 * 3600 * 1000;
+    var date = [];
+
+    for (var i = 1; i < n; i++) {
+      var now = new Date(base += oneDay);
+      date.push([now.getFullYear(), now.getMonth() + 1, now.getDate()].join('/'));
+    }
+
+    return date
+  }
+
+  function getYData(n) {
+    var data = [Math.random() * 300];
+
+    for (var i = 1; i < n; i++) {
+      data.push(Math.round((Math.random() - 0.5) * 20 + data[i - 1]));
+    }
+    return data
+  }
+</script>
+<script>
+  const input = document.querySelector('#input')
+  const btn = document.querySelector('#render-btn')
+
+  const echartTime = document.querySelector('#echart-time')
+  const highchartTime = document.querySelector('#highchart-time')
+  btn.addEventListener('click', () => {
+    const number = input.value
+    setChart(number)
+  })
+
+  setChart(10000)
+
+  function setChart(num) {
+    let xData = getXData(num)
+    let yData = getYData(num)
+
+    Promise.all([setEchart(xData, yData), setHighChart(xData, yData)]).then(() => {
+      console.log('end')
+    })
+  }
+
+  function setEchart(xData, yData) {
+    const startTime = new Date().getTime()
+    return new Promise(resolve => {
+      const echart = echarts.init(document.getElementById('echart'));
+      const echartOption = {
+        tooltip: {
+          trigger: 'axis'
+        },
+        xAxis: {
+          type: 'category',
+          boundaryGap: false,
+          data: xData
+        },
+        yAxis: {
+          type: 'value'
+        },
+        series: [
+          {
+            name: 'mock data',
+            type: 'line',
+            smooth: true,
+            symbol: 'none',
+            sampling: 'average',
+            data: yData
+          }
+        ]
+      };
+      echart.setOption(echartOption);
+      echartTime.innerText = new Date().getTime() - startTime
+
+      resolve()
+    })
+  }
+
+  function setHighChart(xData, yData) {
+    const startTime = new Date().getTime()
+
+    return new Promise((resolve) => {
+        Highcharts.chart('high-chart', {
+          plotOptions: {
+            series: {
+              animation: false
+            }
+          },
+          chart: {
+            type: 'line',
+            animation: false,
+          },
+          xAxis: {
+            categories: xData
+          },
+          series: [{
+            name: 'mock-data',
+            data: yData
+          }]
+        });
+        highchartTime.innerText = new Date().getTime() - startTime
+        resolve()
+
+      }
+    )
+  }
+
+</script>
+
+<script>
+
+
+</script>
+
+</html>
