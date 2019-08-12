@@ -134,6 +134,9 @@
         animation: false
       }
     },
+    boost: {
+      useGPUTranslations: true
+    },
     chart: {
       type: 'line',
       animation: false,
@@ -230,6 +233,9 @@
 
     return new Promise((resolve) => {
         highChart.update({
+          boost: {
+            useGPUTranslations: true
+          },
           xAxis: {
             categories: xData
           },
